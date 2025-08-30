@@ -1,0 +1,172 @@
+let stars = []
+let particles = [];
+let song;
+let fft;
+let peakDetect;
+let images = [];
+let images2 = [];
+let images3 = [];
+let currentFrame = 0;
+
+function preload() {
+  song = loadSound("Hair.mp3");
+  
+  images[0] = loadImage("1a.jpg");
+  images[1] = loadImage("2a.jpg");
+  images[2] = loadImage("4a.jpg");
+  images[3] = loadImage("3a.jpg");
+  images[4] = loadImage("5a.jpg");
+  images[5] = loadImage("6a.jpg");
+
+  images2[0] = loadImage("1b.jpg");
+  images2[1] = loadImage("2b.jpg");
+  images2[2] = loadImage("3b.jpg");
+  images2[3] = loadImage("4b.jpg");
+  images2[4] = loadImage("5b.jpg");
+  images2[5] = loadImage("6b.jpg");
+  
+  images3[0] = loadImage("1c.jpg");
+  images3[1] = loadImage("2c.jpg");
+  images3[2] = loadImage("3c.jpg");
+  images3[3] = loadImage("4c.jpg");
+  images3[4] = loadImage("5c.jpg");
+  images3[5] = loadImage("6c.jpg");
+  
+}
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  
+  song.play();
+  ///// file button
+  input = createFileInput(handleSound);
+  input.position(10, 10);
+  input.size(87, 100);
+  input.style('background-image', 'url("afile.PNG")');
+  input.style('background-size', 'cover');
+  
+  link = createDiv('');
+  link.position(100, 10);  
+  link.size(290, 100);      
+  link.style('cursor', 'pointer');
+  link.style('background-image', 'url("s3-1.png")');
+ link.style('background-size', 'cover');
+  
+  link.mousePressed(() => {
+    window.open('https://open.spotify.com/artist/3ivlL9leOBO0EMUDRqnhtf?si=IttJ5w0hTPqAsGRQSqVJ9g'); 
+  });
+  
+  input.mousePressed(() => {
+  input.elt.click();
+});
+  fft = new p5.FFT();
+  fft.setInput(song);
+  peakDetect = new p5.PeakDetect(60, 300, 0.5, 2);
+}
+
+function draw() {
+  background(0,0,20,25);
+  /// text
+   push();
+  fill(255, 255, 255, 30);
+  textSize(24);
+  textAlign(CENTER);
+  text("Click anywhere to play/pause", width/2, height - 100);
+   pop();
+  /// border glow
+  
+let pulse = sin(frameCount * 0.1) * 0.5 + 0.5; 
+let glowSize = 20 + (pulse * 20); 
+input.style('box-shadow', `0 0 ${glowSize}px #FFFFFF, 0 0 ${glowSize*2}px #FFFFFF`);
+link.style('box-shadow', `0 0 ${glowSize}px #FFFFFF, 0 0 ${glowSize*2}px #FFFFFF`);
+////// background stars  
+    var galaxy = { 
+  locationX : random(width),
+  locationY : random(height),
+  size : random(4,9)
+}
+  ellipse(mouseX ,mouseY, galaxy.size, galaxy.size);
+  ellipse(galaxy.locationX ,galaxy.locationY, galaxy.size, galaxy.size);
+  ///// particles from class
+  particles.push(new Particle(width/2, height/2));
+  
+  for (let i =0; i<particles.length; i++) {
+
+  particles[i].update();
+  particles[i].display();
+  
+    
+    if (particles[i].done) {
+      particles.splice(i, 1);
+    }
+  }
+  
+  fft.analyze();
+  peakDetect.update(fft);
+  /////// array 1
+if (frameCount % 12000000 == 0) { 
+  currentFrame = (currentFrame + 1) % images3.length;
+  console.log("Timed change to frame:", currentFrame);
+}
+  
+
+if (images3.length > 0) {
+  let img = images3[currentFrame];
+  img.resize(300, 0); 
+  let x = width/2 - img.width/2;   
+  let y = height/2 - img.height/2;
+  image(img, x, y);
+}
+
+  ///////////// array 2
+  if (peakDetect.isDetected) {
+    currentFrame = (currentFrame + 1) % images2.length;
+  }
+  
+if (images2.length > 0) {
+  let img = images2[currentFrame];
+  img.resize(230, 0); 
+  image(img, width/2 - 520, height/2 -70);
+}
+  /////////// array 3 
+  if (peakDetect.isDetected) {
+    currentFrame = (currentFrame + 1) % images.length;
+  }
+  
+  if (images.length > 0) {
+  let img = images[currentFrame];
+  img.resize(230, 0); 
+  image(img, width/2 + 300, height/2 - 300);
+}
+  
+  
+}
+///////////// pause play
+function mousePressed() {
+  if (song.isPlaying()) {
+    song.pause();
+  } else {
+    song.play();
+  }
+}
+
+
+
+
+/////////////////////// see if song is playing
+function handleSound(file) {
+  if (file.type === 'audio') {
+    if (song.isPlaying()) {
+      song.stop();
+    }
+ ////////////////////   load file
+    song = loadSound(file.data, () => {
+      fft.setInput(song);
+      song.play();
+    });
+  }
+}
+///////////////// resize
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
